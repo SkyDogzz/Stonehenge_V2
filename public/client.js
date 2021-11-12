@@ -259,7 +259,7 @@ function animate() {
 function panel() {
   var params = {
     rotationSpeed: 0.005,
-    switch: true,
+    switch: false,
     helper: false,
   };
 
