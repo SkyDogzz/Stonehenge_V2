@@ -43,10 +43,21 @@ let mixer;
 let animations;
 let mixerR = false;
 const clock = new THREE.Clock();
+let loader
+let loadingManager
 
-init();
 
+
+const startButton = document.getElementById( 'image' );
+			startButton.addEventListener( 'click', overlayRemove);
+function overlayRemove(){
+  const overlay = document.getElementById( 'overlay' );
+        document.querySelector('html').style.backgroundColor = 'rgb(47, 146, 228)';
+	      overlay.remove();
+        init()
+}
 function init() {
+
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -73,11 +84,11 @@ function init() {
   stats = new Stats();
   document.body.appendChild(stats.dom);
 
-  const loadingManager = new THREE.LoadingManager(function () {
+  loadingManager = new THREE.LoadingManager(function () {
     scene.add(elf);
   });
 
-  const loader = new ColladaLoader(loadingManager);
+  loader = new ColladaLoader(loadingManager);
   loader.load("./models/Jumping Down.dae", function (collada) {
     elf = collada.scene;
     elf.traverse(function(child) {
