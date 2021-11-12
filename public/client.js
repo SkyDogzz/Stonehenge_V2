@@ -2,9 +2,10 @@ import * as THREE from "three";
 import Stats from "/jsm/libs/stats.module.js";
 import { OrbitControls } from "/jsm/controls/OrbitControls.js";
 import { GUI } from "/jsm/libs/dat.gui.module.js";
+import { ColladaLoader } from "/jsm/loaders/ColladaLoader.js";
 
 let rotationSpeed = 0.005;
-let rotate = true;
+let rotate = false;
 
 let axesHelper;
 
@@ -37,9 +38,13 @@ let pillarExt, topExt, pillarInt, topInt, pillarMid, ground, altar, altarTop;
 let ambientLight, pointLight;
 let controls;
 let stats;
+let elf;
+let mixer;
+let animations;
+let mixerR = false;
+const clock = new THREE.Clock();
 
 init();
-animate();
 
 function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -68,7 +73,25 @@ function init() {
   stats = new Stats();
   document.body.appendChild(stats.dom);
 
-  axesHelper = new THREE.AxesHelper(10000);
+  const loadingManager = new THREE.LoadingManager(function () {
+    scene.add(elf);
+  });
+
+  const loader = new ColladaLoader(loadingManager);
+  loader.load("./models/Jumping Down.dae", function (collada) {
+    elf = collada.scene;
+    animations = elf.animations;
+    elf.scale.set(2.5, 2.5, 2.5);
+    elf.position.y = 20;
+    elf.position.x = 350 * Math.cos(THREE.MathUtils.degToRad(135));
+    elf.position.z = 350 * Math.sin(THREE.MathUtils.degToRad(135));
+    elf.rotation.y = THREE.MathUtils.degToRad(135);
+    mixer = new THREE.AnimationMixer(elf);
+    mixer.clipAction(animations[0]).play();
+    mixerR = true
+  });
+
+  axesHelper = new THREE.AxesHelper(10000); 
   axesHelper.visible = false;
   scene.add(axesHelper);
 
@@ -208,6 +231,7 @@ function init() {
   scene.add(altarTop);
 
   panel();
+  animate();
 
   window.addEventListener("resize", onWindowResize);
 }
@@ -223,6 +247,9 @@ function animate() {
   requestAnimationFrame(animate);
 
   stats.update();
+  const delta = clock.getDelta();
+
+  if (mixerR) mixer.update(delta);
 
   scene.rotation.y += rotationSpeed * rotate;
 
