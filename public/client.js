@@ -80,6 +80,10 @@ function init() {
   const loader = new ColladaLoader(loadingManager);
   loader.load("./models/Jumping Down.dae", function (collada) {
     elf = collada.scene;
+    elf.traverse(function(child) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+  });
     animations = elf.animations;
     elf.scale.set(2.5, 2.5, 2.5);
     elf.position.y = 20;
