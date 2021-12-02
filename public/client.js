@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import Stats from "/jsm/libs/stats.module.js";
-import { OrbitControls } from "/jsm/controls/OrbitControls.js";
+import { FirstPersonControls } from "/jsm/controls/FirstPersonControls.js";
 import { GUI } from "/jsm/libs/dat.gui.module.js";
 import { ColladaLoader } from "/jsm/loaders/ColladaLoader.js";
 
-let rotationSpeed = 0.005;
+let rotationSpeed = 0.001;
 let rotate = false;
 
 let axesHelper;
@@ -45,8 +45,9 @@ let mixerR = false;
 const clock = new THREE.Clock();
 let loader
 let loadingManager
-
-
+let ambientSound
+let guySound
+let listener
 
 const startButton = document.getElementById( 'image' );
 			startButton.addEventListener( 'click', overlayRemove);
@@ -65,21 +66,26 @@ function init() {
   renderer.shadowMap.type = THREE.BasicShadowMap;
   document.body.appendChild(renderer.domElement);
 
-  camera = new THREE.PerspectiveCamera(
-    90,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    30000
-  );
-  camera.position.z = 4500;
-  camera.position.y = 2500;
-  camera.lookAt(0, 0, 0);
 
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enablePan = false;
-  controls.maxPolarAngle = THREE.Math.degToRad(80);
+  camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.set( 0, 400, 0 );
+  controls = new FirstPersonControls( camera, renderer.domElement );
+  controls.movementSpeed = 400;
+  controls.lookSpeed = 0.05;
+  controls.noFly = true;
+  controls.lookVertical = false;
 
   scene = new THREE.Scene();
+
+  listener = new THREE.AudioListener();
+  camera.add(listener);
+
+  ambientSound = new THREE.PositionalAudio( listener );
+	const songElement = document.getElementById( 'song' );
+	ambientSound.setMediaElementSource( songElement );
+	ambientSound.setRefDistance( 80 );
+	songElement.play();
+	camera.add( ambientSound );
 
   stats = new Stats();
   document.body.appendChild(stats.dom);
@@ -105,6 +111,7 @@ function init() {
     mixer.clipAction(animations[0]).play();
     mixerR = true
   });
+  
 
   axesHelper = new THREE.AxesHelper(10000); 
   axesHelper.visible = false;
@@ -254,6 +261,7 @@ function init() {
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  controls.handleResize();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
@@ -263,9 +271,8 @@ function animate() {
 
   stats.update();
   const delta = clock.getDelta();
-
+  controls.update( delta );
   if (mixerR) mixer.update(delta);
-
   scene.rotation.y += rotationSpeed * rotate;
 
   renderer.render(scene, camera);
